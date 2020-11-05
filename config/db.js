@@ -7,7 +7,8 @@ const connectDB = async () => {
         await mongoose.connect(db, {
             useNewUrlParser: true, //makes the deprecated warnings go away
             useUnifiedTopology: true, //makes the deprecated warnings go away
-            useCreateIndex: true //makes deprecation error go away
+            useCreateIndex: true, //makes deprecation error go away
+            useFindAndModify: false //makes deprecation error go away for model.findOneAndUpdate()
         });
 
         console.log('MongoDB connected through mongoose...');

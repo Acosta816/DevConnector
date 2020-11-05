@@ -64,10 +64,35 @@ router.post('/', [auth, [
         else if (req.body[field]) {
             profileFields[field] = req.body[field];
         }
-    });
+    });//end of profileFields.forEach()
+
     console.log(profileFields)
+    console.log(req.user);
+    console.log(req.body);
+
+    //Now we create or update our profile.
+    try {
+        let userProfile = await Profile.findOne({ user: req.user.id });
+        if (userProfile) {
+            //update
+            console.log('we found the profile, lets update it.')
+            userProfile = await Profile.findOneAndUpdate({ user: req.user.id }, { $set: profileFields }, { new: true });
+            return res.status(200).json(userProfile).end();
+        }
+        else if (!userProfile) {
+            console.log('No profile found for this user, lets MAKE ONE!')
+            userProfile = await Profile.create(profileFields);
+            return res.status(201).json(userProfile);
+        }
+    }
+    catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: err.message }).end();
+    }
+
+
     res.json(profileFields);
 
-})
+});//end of POST /
 
 module.exports = router;
