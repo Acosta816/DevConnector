@@ -1,0 +1,1 @@
+NOTE: declaring this entire callback function to POST as an 'async' function because we need to add some blocking 'await' functions in that block. (recall you can only use 'await' functionality inside an 'async' block)

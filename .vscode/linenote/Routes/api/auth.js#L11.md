@@ -1,0 +1,1 @@
+If you don't want to use instance methods, you can just query User.findById(req.user.id).select('-password') to obtain the document without the password.
