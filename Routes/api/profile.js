@@ -15,7 +15,7 @@ router.get('/me', auth, async (req, res) => {
         const profile = await Profile.findOne({ user: req.user.id }).populate('user', ['name', 'avatar']); //querying for a specific profile based on the user property on the profile. We also pre-populate the user property with 'name' and 'avatar'. could have also done populate('user').easyRead();
 
         if (!profile) {
-            return res.status(400).json({ message: 'No profile for this user' }).end();
+            return res.status(400).json({ message: 'Token is good, just looks like that user does not have a profile yet.', details: ' Create a new profile by POSTing at profile/ using this same token in the x-auth-token header. Include the profile fields in the body.' }).end();
         }
 
         res.json(profile);
@@ -94,5 +94,109 @@ router.post('/', [auth, [
     res.json(profileFields);
 
 });//end of POST /
+
+
+//@route:    GET api/profile
+// @desc:    GET all existing profiles in db
+// @access:  Public
+router.get('/', async (req, res) => {
+    try {
+        const profiles = await Profile.find().populate('user', ['name', 'avatar']);
+        res.status(200).json({ count: profiles.length, profiles: profiles });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error man');
+    }
+});//end of GET all profiles
+
+
+//@route:    GET api/profile/user/:userId
+// @desc:    GET specific profile (not user data) based on user database id (not profile db id).
+// @access:  Public
+router.get('/user/:userId', async (req, res) => {
+    try {
+        const profile = await Profile.findOne({ user: req.params.userId }).populate('user', ['name', 'avatar']);
+        if (!profile) {
+            return res.status(400).send('No profile for that user id. perhaps check the id.').end();
+        }
+        return res.status(200).json({ profile });
+    } catch (err) {
+        console.error(err.message);
+        if (err.kind === 'ObjectId') {
+            return res.status(400).send('No profile for that user id. Perhaps check the id.').end();
+        }
+        res.status(500).send('Server Error man');
+    }
+});//End of Get /user/:userId 
+
+
+
+//@route:    DELETE api/profile
+// @desc:    DELETE specific profile, user, and all posts by user.
+// @access:  PRIVATE
+router.delete('/', auth, async (req, res) => {
+    try {
+        //@TODO - remove user's posts
+
+        //Removes profile
+        await Profile.findOneAndRemove({ user: req.user.id });
+        //Removes the user
+        await User.findByIdAndRemove(req.user.id);
+
+        return res.status(200).json({ msg: 'User removed, and profile removed' });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error man');
+    }
+});//End of DELETE /
+
+
+
+//@route:    PUT api/profile/experience
+// @desc:    Update/add profile experience
+// @access:  PRIVATE
+router.put('/experience', [auth, [
+    check('title', 'Title is required')
+        .not()
+        .isEmpty(),
+    check('company', 'Company is required')
+        .not()
+        .isEmpty(),
+    check('from', 'from date is required')
+        .not()
+        .isEmpty()
+]], async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { title, company, location, from, to, current, description } = req.body;
+
+    const newExp = {
+        title,
+        company,
+        location,
+        from,
+        to,
+        current,
+        description
+    };
+
+    try {
+        const profile = await Profile.findOne({ user: req.user.id });
+
+        profile.experience.unshift(newExp);
+
+        await profile.save();
+
+        return res.json(profile);
+
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error mann')
+    }
+
+});
 
 module.exports = router;
