@@ -2,10 +2,11 @@ import { combineReducers } from 'redux';
 import alert from './alert';
 import auth from './auth';
 import profile from './profile';
+import post from './post';
 
-//imports the various reducers existing in reducers/ and combines+exports them
 export default combineReducers({
-    alert,
-    auth,
-    profile
+  alert,
+  auth,
+  profile,
+  post
 });
